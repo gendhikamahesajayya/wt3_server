@@ -22,9 +22,26 @@ var buku = [
 
 app.use(express.json());
 
-app.get('/', (req, res) => 
-    res.send("Hello, world")
-    )
+
+    app.get('/', (req, res) => {
+        var usage = {
+            "GET all buku": "http://localhost:3000/buku",
+            "GET with Limit and Page": "http://localhost:3000/buku?limit=2&page=2",
+            "GET with Kode_buku": "http://localhost:3000/buku/001",
+            "GET with Kategori": "http://localhost:3000/buku/kategori/Novel",
+            "GET with Penulis": "http://localhost:3000/penulis/Kugane",
+            "GET with Judul": "http://localhost:3000/buku/judul/Overlord",
+            "GET with Tahun": "http://localhost:3000/buku/tahun/2016",
+        }
+        var response = {
+            "message": "Welcome to Perpustakaan API",
+            "List Usage GET:": usage,
+            "Usage Delete:": "http://localhost:3000/buku/001",
+            "Usage Update:": "http://localhost:3000/buku/001",
+            "Usage Post:": "http://localhost:3000/buku",
+        };
+        res.status(200).send(response);
+    });
 
 app.get('/buku', (req, res) => { //variable buku
     var connection = mysql.createConnection({ 
@@ -33,6 +50,18 @@ app.get('/buku', (req, res) => { //variable buku
         password : process.env.DB_PASSWORD, 
         database : process.env.DB_NAME 
         });
+
+        var sorte = req.query.sort;
+    var orderquery = "";
+    if (sorte != null) {
+        var desce = sorte.includes("-");
+        if (desce) {
+            var a =sorte.substring(1)
+            orderquery +=  " ORDER BY " + a + " DESC "
+        } else {
+            orderquery += " ORDER BY " + sorte + " ASC"
+        }
+    }
     connection.connect();
     connection.query("SELECT * FROM buku", 
         function (error, results, fields){
@@ -74,7 +103,7 @@ app.get('/buku', (req, res) => { //variable buku
         })
     }
     if (req.query.penulis){
-        results = restaurants.filter((book) => {
+        results = results.filter((book) => {
             return (book.penulis.toLowerCase() == req.query.penulis.toLowerCase())
         })
     }
