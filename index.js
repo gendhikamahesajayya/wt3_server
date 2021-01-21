@@ -55,7 +55,7 @@ app.get('/buku', (req, res) => {
         }
     }
     connection.connect();
-    connection.query("SELECT * FROM buku", 
+    connection.query("SELECT * FROM buku where isdeleted=0", 
         function (error, results, fields){
             if (error){
                 res.status(500).send({
