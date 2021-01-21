@@ -194,7 +194,7 @@ app.get('/buku/:kd_buku', (req, res) => {
     connection.connect();
     
     connection.query("select kd_buku, judul, isbn, cover, penulis, tahun, ket from buku " 
-                    + " where kd_buku = ? ", [req.params.kd_buku], 
+                    + " where kd_buku = ? AND where isdeleted=0", [req.params.kd_buku], 
         function(error, results, fields){
             if (error){
                 res.status(500).send({
@@ -234,7 +234,7 @@ app.get('/buku/kategori/:kategori', (req, res) => {
     connection.connect();
     
     connection.query("select * from buku " 
-                    + " where kategori_buku = ? ", [req.params.kategori], 
+                    + " where kategori_buku = ? AND where isdeleted=0 ", [req.params.kategori], 
         function(error, results, fields){
             if (error){
                 res.status(500).send({
@@ -273,7 +273,7 @@ app.get('/buku/penulis/:penulis', (req, res) => {
     connection.connect();
     
     connection.query("select * from buku " 
-    + " where penulis like '%"+req.params.penulis+"%' ",
+    + " where penulis like '%"+req.params.penulis+"%' AND where isdeleted=0",
         function(error, results, fields){
             if (error){
                 res.status(500).send({
@@ -312,7 +312,7 @@ app.get('/buku/judul/:judul', (req, res) => {
     connection.connect();
     
     connection.query("select * from buku " 
-    + " where judul like '%"+req.params.judul+"%' ",
+    + " where judul like '%"+req.params.judul+"%' AND where isdeleted=0",
         function(error, results, fields){
             if (error){
                 res.status(500).send({
@@ -351,7 +351,7 @@ app.get('/buku/tahun/:tahun', (req, res) => {
     connection.connect();
     
     connection.query("select * from buku " 
-                    + " where tahun  = ? ", [req.params.tahun], 
+                    + " where tahun  = ? AND where isdeleted=0", [req.params.tahun], 
         function(error, results, fields){
             if (error){
                 res.status(500).send({
@@ -425,7 +425,7 @@ function checkingError(newbuku) {
         })
     }
     // jika newbuku.kategori kosong
-    if (!newbuku.kategori){
+    if (!newbuku.kategori_buku){
         errors.push({
             field: "kategori",
             message: "kategori buku is required"
@@ -443,8 +443,16 @@ function checkingError(newbuku) {
 
 //Post buku 
 app.post('/buku', (req, res) => {
-    if (req.user.allowadd == 1) {
+    var connection = mysql.createConnection({ 
+        host : process.env.DB_HOST,
+        user : process.env.DB_USER, 
+        password : process.env.DB_PASSWORD, 
+        database : process.env.DB_NAME 
+        });
+    connection.connect();
+
         var newbuku = req.body;
+        console.log(req)
         var errors = checkingError(newbuku);
 
         if (errors.length > 0) {
@@ -461,7 +469,7 @@ app.post('/buku', (req, res) => {
                     newbuku.cover,
                     newbuku.penulis,
                     newbuku.tahun,
-                    newbuku.kategori,
+                    newbuku.kategori_buku,
                     newbuku.ket,
                 ],
                 function (error, rows, fields) {
@@ -482,28 +490,29 @@ app.post('/buku', (req, res) => {
                     }
                 })
         }
-    } else {
-        res.status(401).send({
-            "message": "Unauthorize",
-            "detail": "User not Auth for Add"
-        })
-    }
+    
 });
 
 //Update buku
 app.put('/buku/:kd_buku', (req, res) => {
-    if (req.user.allowupdate == 1) {
+    var connection = mysql.createConnection({ 
+        host : process.env.DB_HOST,
+        user : process.env.DB_USER, 
+        password : process.env.DB_PASSWORD, 
+        database : process.env.DB_NAME 
+        });
+    connection.connect();
         var updatebuku = req.body;
+        var dataId = req.params.kd_buku;
 
         var dataForUpdate = {
-            "kd_buku": req.params.kd_buku,
             "judul": updatebuku.judul,
             "isbn": updatebuku.isbn,
             "cover": updatebuku.cover,
             "penulis": updatebuku.penulis,
             "tahun": updatebuku.tahun,
-            "kategori buku": updatebuku.kategori,
-            "keterangan": updatebuku.ket,
+            "kategori_buku": updatebuku.kategori_buku,
+            "ket": updatebuku.ket,
         }
         var errors = checkingError(dataForUpdate)
         // jika updatebuku.kd_buku kosong / null / empty
@@ -516,14 +525,14 @@ app.put('/buku/:kd_buku', (req, res) => {
             connection.query('UPDATE buku SET' +
                 ' judul =?, isbn= ? , cover=?, penulis=?, tahun=?, kategori_buku=?, ket=?  WHERE kd_buku = ?',
                 [
-                    dataForUpdate.kd_buku,
                     dataForUpdate.judul,
                     dataForUpdate.isbn,
                     dataForUpdate.cover,
                     dataForUpdate.penulis,
                     dataForUpdate.tahun,
-                    dataForUpdate.kategori,
+                    dataForUpdate.kategori_buku,
                     dataForUpdate.ket,
+                    dataId
                 ],
                 function (error, rows, fields) {
                     if (error) {
@@ -553,30 +562,26 @@ app.put('/buku/:kd_buku', (req, res) => {
                     }
                 })
         }
-    } else {
-        res.status(401).send({
-            "message": "Unauthorize",
-            "detail": "User not Auth for Update"
-        })
-    }
+    
 });
 
 //Delete buku berdasarkan kode_buku
 app.delete('/buku/:kd_buku', (req, res) => {
-    if (req.user.allowdelete == 1) {
+    var connection = mysql.createConnection({ 
+        host : process.env.DB_HOST,
+        user : process.env.DB_USER, 
+        password : process.env.DB_PASSWORD, 
+        database : process.env.DB_NAME 
+        });
+    connection.connect();
+        var dataId = req.params.kd_buku;
         var errors = [];
-        connection.query('UPDATE lagu SET isdeleted = true where kd_buku = ? AND isdeleted = false', [req.params.kd_buku],
+        connection.query('UPDATE buku set isdeleted = 1 where kd_buku = ?', [dataId],
             function (error, rows, fields) {
                 if (error) {
                     errors.push({
                         "field": "Select",
                         "message": "Query for select is error"
-                    });
-                }
-                if (rows.affectedRows < 1) {
-                    errors.push({
-                        "field": "Select",
-                        "message": "buku with kd_buku " + req.params.kd_buku + " is not found."
                     });
                 }
                 if (errors.length > 0) {
@@ -586,19 +591,15 @@ app.delete('/buku/:kd_buku', (req, res) => {
                 }
                 else {
                     var response = {
-                        "data": rows,
+                        "data": "kd_buku",
                         "message": "Delete a buku success.",
                     };
                     res.status(200).send(response);
                 }
             });
-    } else {
-        res.status(401).send({
-            "message": "Unauthorize",
-            "detail": "User not Auth for Delete"
-        })
-    }
+            
 });
+
 
 
 app.listen(port, () =>      
