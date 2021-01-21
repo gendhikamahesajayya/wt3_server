@@ -6,6 +6,17 @@ const mysql = require('mysql'); // load mysql package
 require('dotenv').config(); // load .env file
 
 app.use(express.json());
+
+// DEFINISIKAN CONNECTION
+var connection = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    multipleStatements: true
+});
+connection.connect();
+
 // API HOME BASE
 app.get('/', (req, res) => {
     var usage = {
@@ -28,13 +39,6 @@ app.get('/', (req, res) => {
 });
 //Get List book 
 app.get('/buku', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-
     var sorte = req.query.sort;
     var orderquery = "";
     if (sorte != null) {
@@ -46,7 +50,6 @@ app.get('/buku', (req, res) => {
             orderquery += " ORDER BY " + sorte + " ASC"
         }
     }
-    connection.connect();
     connection.query("SELECT * FROM buku where isdeleted=0",
         function (error, results, fields) {
             if (error) {
@@ -172,20 +175,12 @@ app.get('/buku', (req, res) => {
                     res.status(200).send(response)
                 }
             }
-            connection.end();
+            
         });
 })
 //Get buku by kode buku
 app.get('/buku/:kd_buku', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-    connection.connect();
-
-    connection.query("select kd_buku, judul, isbn, cover, penulis, tahun, ket from buku "
+    connection.query("select * from buku "
         + " where kd_buku = ? AND isdeleted=0", [req.params.kd_buku],
         function (error, results, fields) {
             if (error) {
@@ -211,19 +206,11 @@ app.get('/buku/:kd_buku', (req, res) => {
             else {
                 res.status(200).send(results[0]);
             }
-            connection.end();
+            
         });
 });
 //Get buku by kategori
 app.get('/buku/kategori/:kategori', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-    connection.connect();
-
     connection.query("select * from buku "
         + " where kategori_buku = ? AND isdeleted=0 ", [req.params.kategori],
         function (error, results, fields) {
@@ -250,19 +237,11 @@ app.get('/buku/kategori/:kategori', (req, res) => {
             else {
                 res.status(200).send(results);
             }
-            connection.end();
+            
         });
 });
 //Get buku by penulis
 app.get('/buku/penulis/:penulis', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-    connection.connect();
-
     connection.query("select * from buku "
         + " where penulis like '%" + req.params.penulis + "%' AND isdeleted=0",
         function (error, results, fields) {
@@ -289,19 +268,11 @@ app.get('/buku/penulis/:penulis', (req, res) => {
             else {
                 res.status(200).send(results);
             }
-            connection.end();
+            
         });
 });
 //Get buku by judul
 app.get('/buku/judul/:judul', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-    connection.connect();
-
     connection.query("select * from buku "
         + " where judul like '%" + req.params.judul + "%' AND isdeleted=0",
         function (error, results, fields) {
@@ -328,19 +299,11 @@ app.get('/buku/judul/:judul', (req, res) => {
             else {
                 res.status(200).send(results);
             }
-            connection.end();
+            
         });
 });
 //Get buku by tahun
 app.get('/buku/tahun/:tahun', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-    connection.connect();
-
     connection.query("select * from buku "
         + " where tahun  = ? AND isdeleted=0", [req.params.tahun],
         function (error, results, fields) {
@@ -367,7 +330,7 @@ app.get('/buku/tahun/:tahun', (req, res) => {
             else {
                 res.status(200).send(results);
             }
-            connection.end();
+            
         });
 });
 // Checking Error
@@ -453,16 +416,7 @@ function checkingUserIdAndBookId(req) {
 }
 //Post/ Tambahkan buku 
 app.post('/buku', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-    connection.connect();
-
     var newbuku = req.body;
-    console.log(req)
     var errors = checkingError(newbuku);
 
     if (errors.length > 0) {
@@ -504,16 +458,7 @@ app.post('/buku', (req, res) => {
 });
 //Update/ Edit buku
 app.put('/buku/:kd_buku', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-    connection.connect();
     var updatebuku = req.body;
-    var dataId = req.params.kd_buku;
-
     var dataForUpdate = {
         "judul": updatebuku.judul,
         "isbn": updatebuku.isbn,
@@ -574,13 +519,6 @@ app.put('/buku/:kd_buku', (req, res) => {
 });
 //Delete buku berdasarkan kode_buku
 app.delete('/buku/:kd_buku', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-    connection.connect();
     var dataId = req.params.kd_buku;
     var errors = [];
     connection.query('UPDATE buku set isdeleted = 1 where kd_buku = ?', [dataId],
@@ -612,15 +550,6 @@ app.delete('/buku/:kd_buku', (req, res) => {
 // 1 =  dipinjam oleh orang
 //Post/ Peminjaman Buku 
 app.post('/peminjaman/pinjam', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        multipleStatements: true
-    });
-    connection.connect();
-
     var data_peminjaman = req.body;
     var errors = checkingUserIdAndBookId(data_peminjaman);
     console.log("user", data_peminjaman.user_id)
@@ -633,7 +562,7 @@ app.post('/peminjaman/pinjam', (req, res) => {
     }
     else {
         connection.query(
-            'UPDATE buku SET status_buku = 1, id_peminjam = ? WHERE kd_buku = ? ;'+
+            'UPDATE buku SET status_buku = 1, id_peminjam = ? WHERE kd_buku = ? ;' +
             'UPDATE get_detail_account SET status_peminjaman = 1,id_buku_pinjaman = ? WHERE id_account = ?',
             [
                 data_peminjaman.user_id,
@@ -656,7 +585,7 @@ app.post('/peminjaman/pinjam', (req, res) => {
                         "data": data_peminjaman,
                         "message": "Buku sukses dipinjam",
                     };
-                    res.status(201).send(response);
+                    res.status(200).send(response);
                 }
             })
     }
@@ -664,15 +593,6 @@ app.post('/peminjaman/pinjam', (req, res) => {
 });
 // Post Kembalikan Buku
 app.post('/peminjaman/kembali', (req, res) => {
-    var connection = mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        multipleStatements: true
-    });
-    connection.connect();
-
     var data_peminjaman = req.body;
     var errors = checkingUserIdAndBookId(data_peminjaman);
     console.log("user", data_peminjaman.user_id)
@@ -685,7 +605,7 @@ app.post('/peminjaman/kembali', (req, res) => {
     }
     else {
         connection.query(
-            'UPDATE buku SET status_buku = 0, id_peminjam = ? WHERE kd_buku = ? ;'+
+            'UPDATE buku SET status_buku = 0, id_peminjam = ? WHERE kd_buku = ? ;' +
             'UPDATE get_detail_account SET status_peminjaman = 0,id_buku_pinjaman = ? WHERE id_account = ?',
             [
                 data_peminjaman.user_id,
@@ -708,7 +628,7 @@ app.post('/peminjaman/kembali', (req, res) => {
                         "data": data_peminjaman,
                         "message": "Buku sukses dikembalikan",
                     };
-                    res.status(201).send(response);
+                    res.status(200).send(response);
                 }
             })
     }
@@ -717,6 +637,195 @@ app.post('/peminjaman/kembali', (req, res) => {
 // 0 = tidak melakukan peminjaman
 // 1 = melakukan peminjaman buku
 // user harus balikin buku baru boleh pinjem lg..
+
+//API GENRE/Kategori
+app.get('/kategori_buku', (req, res) => {
+    // var dbConnect = mysql.createConnection({
+    //     host: process.env.DB_HOST,
+    //     user: process.env.DB_USER,
+    //     password: process.env.DB_PASSWORD,
+    //     database: process.env.DB_NAME,
+    //     multipleStatements: true
+    // });
+    // dbConnect.connect();
+    connection.query(" SELECT * FROM `kategori_buku` WHERE is_deleted = 0", function (error, results, fields) {
+        if (error) {
+            res.status(500).send({
+                "message": "database error occured",
+                "detail": error
+            })
+        }
+        else if (results.length == 0) {
+            res.status(404).send({
+                errors: [
+                    {
+                        field: "id",
+                        message: "Kategori list is not found.",
+                    }
+                ]
+            })
+        }
+        else {
+            res.status(200).send(results)
+        }
+        // dbConnect.end();
+    })
+});
+//Get Kategori By Id
+app.get('/kategori_buku/:kd_kategoribuku', (req, res) => {
+    connection.query(" SELECT * FROM `kategori_buku` WHERE kd_kategoribuku = ? AND is_deleted = 0",
+        [req.params.kd_kategoribuku],
+        function (error, results, fields) {
+            if (error) {
+                res.status(500).send({
+                    "message": "database error occured",
+                    "detail": error
+                })
+            }
+            else if (results.length == 0) {
+                res.status(404).send({
+                    errors: [
+                        {
+                            field: "id",
+                            message: "Kategori with id " + req.params.kd_kategoribuku + " is not found.",
+                        }
+                    ]
+                })
+            }
+            else {
+                res.status(200).send(results[0])
+            }
+        })
+});
+
+// Create Kategori
+app.post('/kategori_buku', (req, res) => {
+    var newgenre = req.body;
+    var errors = [];
+    if (!newgenre.nm_kategoribuku) {
+        errors.push({
+            field: "Nama Kategori",
+            message: "Nama kategori buku is required"
+        })
+    }
+    if (errors.length > 0) {
+        res.status(400).send({
+            errors
+        });
+    }
+    else {
+        connection.query("INSERT INTO kategori_buku (nm_kategoribuku) values (?)",
+            [newgenre.nm_kategoribuku],
+            function (error, rows, fields) {
+                if (error) {
+                    errors.push({
+                        "field": "Error on adding a new genre",
+                        "message": error
+                    });
+                    res.status(400).send({
+                        errors
+                    });
+                } else {
+                    var response = {
+                        "data": newgenre,
+                        "message": "New genre succesfully added to the list.",
+                    };
+                    res.status(200).send(response);
+                }
+            })
+    }
+
+});
+//Update/ Edit genre
+app.put('/kategori_buku/:kd_kategoribuku', (req, res) => {
+    var updategenre = req.body;
+    var errors = [];
+    if (!updategenre.nm_kategoribuku) {
+        errors.push({
+            field: "Nama Kategori",
+            message: "Nama kategori buku is required"
+        })
+    }
+    if (!updategenre.kd_kategoribuku) {
+        errors.push({
+            field: "Kode Kategori",
+            message: "Kode kategori buku is required"
+        })
+    }
+    if (errors.length > 0) {
+        res.status(400).send({
+            errors
+        });
+    }
+    else {
+        connection.query('UPDATE buku SET nm_kategoribuku = ?  WHERE kd_kategoribuku = ?',
+            [
+                updategenre.nm_kategoribuku,
+                updategenre.kd_kategoribuku
+            ],
+            function (error, rows, fields) {
+                if (error) {
+                    errors.push({
+                        "field": "Update Data",
+                        "message": error
+                    });
+                    res.status(400).send({
+                        errors
+                    });
+                } else {
+                    if (rows.affectedRows < 1) {
+                        errors.push({
+                            "field": "Select",
+                            "message": "Genre with kd_kategoribuku " + req.params.kd_kategoribuku + " is not found."
+                        });
+                        res.status(400).send({
+                            errors
+                        });
+                    } else {
+                        var response = {
+                            "data": updategenre,
+                            "message": "Update genre success.",
+                        };
+                        res.status(200).send(response);
+                    }
+                }
+            })
+    }
+
+});
+//Delete genre berdasarkan kd_kategoribuku
+app.delete('/kategori_buku/:kd_kategoribuku', (req, res) => {
+    var dataId = req.params.kd_kategoribuku;
+    var errors = [];
+    if (!dataId) {
+        errors.push({
+            field: "Kode Kategori",
+            message: "Kode kategori buku is required"
+        })
+    }
+    connection.query('UPDATE kategori_buku set is_deleted = 1 where kd_kategoribuku = ?', [dataId],
+        function (error, rows, fields) {
+            if (error) {
+                errors.push({
+                    "field": "Select",
+                    "message": "Query for select is error"
+                });
+            }
+            if (errors.length > 0) {
+                res.status(404).send({
+                    errors
+                });
+            }
+            else {
+                var response = {
+                    "data": "kd_kategoribuku",
+                    "message": "Delete the genre success.",
+                };
+                res.status(200).send(response);
+            }
+        });
+
+});
 
 // Listen
 app.listen(port, () =>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 21, 2021 at 11:40 AM
+-- Generation Time: Jan 21, 2021 at 04:07 PM
 -- Server version: 10.4.11-MariaDB
 -- PHP Version: 7.4.5
 
@@ -48,9 +48,9 @@ CREATE TABLE `buku` (
 INSERT INTO `buku` (`kd_buku`, `judul`, `isbn`, `cover`, `penulis`, `kategori_buku`, `tahun`, `ket`, `status_buku`, `id_peminjam`, `isdeleted`) VALUES
 (1, 'Komi Can\'t Communicate vol 1', '978-1-9747-0712-6', 'https://upload.wikimedia.org/wikipedia/id/d/d1/Cover_Art_Komi-san_wa%2C_Komyushou_desu_Vol_1.jpg', 'Tomohito Oda', 'novel', '2016', 'On her first day attending the elite Itan Private High School, the main setting of the story, Shouko', 0, NULL, 0),
 (2, 'Overlord 1: The Undead King', '978-0-316-27224-7', 'https://en.wikipedia.org/wiki/Overlord_(novel_series)#/media/File:Overlord_novel.jpg', 'Kugane Maruyama', 'novel', '2016', 'Momonga is an average salaryman who spends most of his time playing the game YGGDRASIL. Sadly, YGGDR', 1, 1, 0),
-(3, 'Five Nights at Freddy\'s: The Silver Eyes', '978-1338134377', 'https://images-na.ssl-images-amazon.com/images/I/51kkeE8Jv+L._SX326_BO1,204,203,200_.jpg', 'Scott Cawthon and Kira Breed-Wrisley', 'novel', '2015 ', 'The book follows a young woman named Charlotte, who reunites with her childhood friends on the anniv', 0, NULL, 0),
-(4, 'Gravity Falls: Journal 3', '978-1484746691', 'https://static.wikia.nocookie.net/gravityfalls/images/9/90/Journal_3%27s_dust_cover_1.jpg/revision/latest/scale-to-width-down/700?cb=20160718094558', 'Rob Renzetti and Alex Hirsch', 'novel', '2016', 'Journal 3 brims with every page ever seen on the show plus all-new pages with monsters and secrets, ', 0, NULL, 0),
-(5, 'Fantastic Beasts and Where to Find Them', '0-439-29501-7', 'https://upload.wikimedia.org/wikipedia/en/8/8d/Fantastic_beasts.JPG', 'J. K. Rowling', 'novel', '2010', 'Fantastic Beasts purports to be a reproduction of a textbook owned by Harry Potter and written by ma', 0, NULL, 0);
+(3, 'Five Nights at Freddy\'s: The Silver Eyes', '978-1338134377', 'https://images-na.ssl-images-amazon.com/images/I/51kkeE8Jv+L._SX326_BO1,204,203,200_.jpg', 'Scott Cawthon and Kira Breed-Wrisley', 'komik', '2015 ', 'The book follows a young woman named Charlotte, who reunites with her childhood friends on the anniv', 0, NULL, 0),
+(4, 'Gravity Falls: Journal 3', '978-1484746691', 'https://static.wikia.nocookie.net/gravityfalls/images/9/90/Journal_3%27s_dust_cover_1.jpg/revision/latest/scale-to-width-down/700?cb=20160718094558', 'Rob Renzetti and Alex Hirsch', 'komik', '2016', 'Journal 3 brims with every page ever seen on the show plus all-new pages with monsters and secrets, ', 0, NULL, 0),
+(5, 'Fantastic Beasts and Where to Find Them', '0-439-29501-7', 'https://upload.wikimedia.org/wikipedia/en/8/8d/Fantastic_beasts.JPG', 'J. K. Rowling', 'komik', '2010', 'Fantastic Beasts purports to be a reproduction of a textbook owned by Harry Potter and written by ma', 0, NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -88,9 +88,9 @@ INSERT INTO `get_detail_account` (`id_account`, `nama`, `password`, `email`, `le
 --
 
 CREATE TABLE `kategori_buku` (
-  `kd_kategoribuku` varchar(255) NOT NULL,
+  `kd_kategoribuku` int(8) NOT NULL,
   `nm_kategoribuku` varchar(255) NOT NULL,
-  `is_deleted` tinyint(1) NOT NULL
+  `is_deleted` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
@@ -98,19 +98,19 @@ CREATE TABLE `kategori_buku` (
 --
 
 INSERT INTO `kategori_buku` (`kd_kategoribuku`, `nm_kategoribuku`, `is_deleted`) VALUES
-('01', 'novel', 0),
-('02', 'komik', 0),
-('03', 'ensiklopedia', 0),
-('04', 'dongeng', 0),
-('05', 'biography', 0),
-('06', 'diary', 0),
-('07', 'fotography', 0),
-('08', 'kamus', 0),
-('09', 'karya ilmiah', 0),
-('10', 'panduan', 0),
-('11', 'atlas', 0),
-('12', 'teks', 0),
-('13', 'mewarnai', 0);
+(1, 'novel', 0),
+(2, 'komik', 0),
+(3, 'ensiklopedia', 1),
+(4, 'dongeng', 0),
+(5, 'biography', 0),
+(6, 'diary', 0),
+(7, 'fotography', 0),
+(8, 'kamus', 0),
+(9, 'karya ilmiah', 0),
+(10, 'panduan', 0),
+(11, 'atlas', 0),
+(12, 'teks', 0),
+(13, 'mewarnai', 0);
 
 --
 -- Indexes for dumped tables
@@ -123,6 +123,12 @@ ALTER TABLE `buku`
   ADD PRIMARY KEY (`kd_buku`);
 
 --
+-- Indexes for table `kategori_buku`
+--
+ALTER TABLE `kategori_buku`
+  ADD PRIMARY KEY (`kd_kategoribuku`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -131,6 +137,12 @@ ALTER TABLE `buku`
 --
 ALTER TABLE `buku`
   MODIFY `kd_buku` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `kategori_buku`
+--
+ALTER TABLE `kategori_buku`
+  MODIFY `kd_kategoribuku` int(8) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
