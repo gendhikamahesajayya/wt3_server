@@ -175,7 +175,7 @@ app.get('/buku', (req, res) => {
                     res.status(200).send(response)
                 }
             }
-            
+
         });
 })
 //Get buku by kode buku
@@ -206,7 +206,7 @@ app.get('/buku/:kd_buku', (req, res) => {
             else {
                 res.status(200).send(results[0]);
             }
-            
+
         });
 });
 //Get buku by kategori
@@ -237,7 +237,7 @@ app.get('/buku/kategori/:kategori', (req, res) => {
             else {
                 res.status(200).send(results);
             }
-            
+
         });
 });
 //Get buku by penulis
@@ -268,7 +268,7 @@ app.get('/buku/penulis/:penulis', (req, res) => {
             else {
                 res.status(200).send(results);
             }
-            
+
         });
 });
 //Get buku by judul
@@ -299,7 +299,7 @@ app.get('/buku/judul/:judul', (req, res) => {
             else {
                 res.status(200).send(results);
             }
-            
+
         });
 });
 //Get buku by tahun
@@ -330,7 +330,7 @@ app.get('/buku/tahun/:tahun', (req, res) => {
             else {
                 res.status(200).send(results);
             }
-            
+
         });
 });
 // Checking Error
@@ -390,6 +390,46 @@ function checkingError(newbuku) {
         errors.push({
             field: "ket",
             message: "ket buku is required"
+        })
+    }
+    return errors;
+}
+//Checking User Post
+function checkingErrorAccount(newakun) {
+    var errors = []
+    // Account name kosong
+    if (!newakun.nama) {
+        errors.push({
+            field: "Nama",
+            message: "Nama user is required"
+        })
+    }
+    // jika email kosong
+    if (!newakun.email) {
+        errors.push({
+            field: "Email",
+            message: "Email user is required"
+        })
+    }
+    // jika newakun.username kosong
+    if (!newakun.username) {
+        errors.push({
+            field: "Username",
+            message: "Username is required"
+        })
+    }
+    // jika newakun.password kosong
+    if (!newakun.password) {
+        errors.push({
+            field: "Password",
+            message: "Password is required"
+        })
+    }
+    // jika newakun.level_access_user kosong
+    if (!newakun.level_access_user) {
+        errors.push({
+            field: "Level Akses",
+            message: "Level Akses is required"
         })
     }
     return errors;
@@ -825,6 +865,213 @@ app.delete('/kategori_buku/:kd_kategoribuku', (req, res) => {
             }
         });
 
+});
+
+// Get list account
+app.get('/account', (req, res) => {
+    connection.query(" SELECT * FROM `get_detail_account` WHERE is_deleted = 0", function (error, results, fields) {
+        if (error) {
+            res.status(500).send({
+                "message": "database error occured",
+                "detail": error
+            })
+        }
+        else if (results.length == 0) {
+            res.status(404).send({
+                errors: [
+                    {
+                        field: "id",
+                        message: "account list is not found.",
+                    }
+                ]
+            })
+        }
+        else {
+            res.status(200).send(results)
+        }
+    })
+});
+// Get Account by Id
+app.get('/account/:id_account', (req, res) => {
+    connection.query("SELECT * FROM `get_detail_account` WHERE id_account = ? AND is_deleted = 0",
+        [req.params.id_account],
+        function (error, results, fields) {
+            if (error) {
+                res.status(500).send({
+                    "message": "database error occured",
+                    "detail": error
+                })
+            }
+            else if (results.length == 0) {
+                res.status(404).send({
+                    errors: [
+                        {
+                            field: "id",
+                            message: "Account with id " + req.params.id_account + " is not found.",
+                        }
+                    ]
+                })
+            }
+            else {
+                res.status(200).send(results[0])
+            }
+        })
+        
+});
+// Create account
+app.post('/account', (req, res) => {
+    var newakun = req.body;
+    var errors = checkingErrorAccount(newakun);
+
+    if (errors.length > 0) {
+        res.status(400).send({
+            errors
+        });
+    }
+    else {
+        let allow_create = 0
+        let allow_delete = 0
+        let allow_edit = 0
+        let allow_pinjam = 1
+        switch (newakun.level_access_user) {
+            case 1:
+                //Guest User
+                allow_create = 0
+                allow_delete = 0
+                allow_edit = 0
+                allow_pinjam = 1
+                break;
+            case 2:
+                //Admin User
+                allow_create = 1
+                allow_delete = 1
+                allow_edit = 1
+                allow_pinjam = 0
+                break;
+
+            default:
+                break;
+        }
+        connection.query(
+            'INSERT INTO get_detail_account' +
+            ' (`nama`, `password`, `email`, `username`,`level_access_user`, `allow_edit`,`allow_delete`,`allow_pinjam`,`allow_create`)' +
+            ' VALUES (?,?,?,?,?,?,?,?,?)',
+            [
+                newakun.nama,
+                newakun.password,
+                newakun.email,
+                newakun.username,
+                newakun.level_access_user,
+                allow_edit,
+                allow_delete,
+                allow_pinjam,
+                allow_create
+
+            ],
+            function (error, rows, fields) {
+                if (error) {
+                    errors.push({
+                        "field": "Error on adding a new account",
+                        "message": error
+                    });
+                    res.status(400).send({
+                        errors
+                    });
+                } else {
+                    var response = {
+                        "data": newakun,
+                        "message": "New account succesfully added to the list.",
+                    };
+                    res.status(201).send(response);
+                }
+            })
+    }
+
+});
+// Update Account Detail
+app.put('/account/:id_account', (req, res) => {
+    var updateakun = req.body;
+    var dataForUpdate = {
+        "username": updateakun.username,
+        "nama": updateakun.nama,
+    }
+    var errors = []
+    // jika updateakun.kd_buku kosong / null / empty
+    if (errors.length > 0) {
+        res.status(400).send({
+            errors
+        });
+    }
+    else {
+        connection.query('UPDATE get_detail_account SET' +
+            ' username =?, nama= ?  WHERE id_account = ?',
+            [
+                dataForUpdate.username,
+                dataForUpdate.nama,
+                req.params.id_account
+
+            ],
+            function (error, rows, fields) {
+                if (error) {
+                    errors.push({
+                        "field": "Update Data",
+                        "message": error
+                    });
+                    res.status(400).send({
+                        errors
+                    });
+                } else {
+                    if (rows.affectedRows < 1) {
+                        errors.push({
+                            "field": "Select",
+                            "message": "Account with id " + req.params.id_account + " is not found."
+                        });
+                        res.status(400).send({
+                            errors
+                        });
+                    } else {
+                        var response = {
+                            "data": dataForUpdate,
+                            "message": "Update account success.",
+                        };
+                        res.status(200).send(response);
+                    }
+                }
+            })
+    }
+
+});
+// Delete Account
+app.delete('/account/:id_account', (req, res) => {
+    var dataId = req.params.id_account;
+    var errors = [];
+    if (!dataId) {
+        errors.push({
+            field: "Kode Akun",
+            message: "Kode Account is required"
+        })
+    }
+    connection.query('UPDATE get_detail_account set is_deleted = 1 where id_account = ?', [dataId],
+        function (error, rows, fields) {
+            if (error) {
+                errors.push({
+                    "field": "Select",
+                    "message": "Query for select is error"
+                });
+            }
+            if (errors.length > 0) {
+                res.status(404).send({
+                    errors
+                });
+            }
+            else {
+                var response = {
+                    "data": "id_account",
+                    "message": "Delete the account success.",
+                };
+                res.status(200).send(response);
+            }
+        });
 });
 
 // Listen
