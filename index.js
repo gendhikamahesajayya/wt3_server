@@ -15,6 +15,7 @@ var connection = mysql.createConnection({
     database: process.env.DB_NAME,
     multipleStatements: true
 });
+var bcrypt = require('bcryptjs');
 connection.connect();
 
 // API HOME BASE
@@ -916,7 +917,7 @@ app.get('/account/:id_account', (req, res) => {
                 res.status(200).send(results[0])
             }
         })
-        
+
 });
 // Create account
 app.post('/account', (req, res) => {
@@ -952,13 +953,15 @@ app.post('/account', (req, res) => {
             default:
                 break;
         }
+        var salt = bcrypt.genSaltSync(10);
+        var hash = bcrypt.hashSync(newakun.password, salt);
         connection.query(
             'INSERT INTO get_detail_account' +
             ' (`nama`, `password`, `email`, `username`,`level_access_user`, `allow_edit`,`allow_delete`,`allow_pinjam`,`allow_create`)' +
             ' VALUES (?,?,?,?,?,?,?,?,?)',
             [
                 newakun.nama,
-                newakun.password,
+                hash,
                 newakun.email,
                 newakun.username,
                 newakun.level_access_user,
@@ -1072,6 +1075,63 @@ app.delete('/account/:id_account', (req, res) => {
                 res.status(200).send(response);
             }
         });
+});
+
+// Login Account
+app.post('/account/login', (req, res) => {
+    var username = req.body.username;
+    var password = req.body.password;
+    var errors = []
+    if (username) {
+        errors.push({
+            field: "Username",
+            message: "Username is required"
+        })
+    }
+    else if (password) {
+        errors.push({
+            field: "Password",
+            message: "Password is required"
+        })
+    }
+    connection.query('SELECT * FROM get_detail_account WHERE username = ?',
+        [
+            username
+        ],
+        function (error, results, fields) {
+            if (error) {
+                errors.push({
+                    "field": "Error on validation a account",
+                    "message": error
+                });
+                res.status(400).send({
+                    errors
+                });
+            } else {
+                if (results.length > 0) {
+                    const comparision =bcrypt.compareSync(req.body.password, results[0].password)
+                    if (comparision) {
+                        res.send({
+                            "code": 200,
+                            "success": "login sucessfull",
+                            "detailUser":results[0]
+                        })
+                    }
+                    else {
+                        res.send({
+                            "code": 200,
+                            "success": "Username and password does not match"
+                        })
+                    }
+                }
+                else {
+                    res.send({
+                        "code": 200,
+                        "success": "Account does not exist"
+                    });
+                }
+            }
+        })
 });
 
 // Listen
